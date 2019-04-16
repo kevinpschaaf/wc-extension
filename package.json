@@ -1,0 +1,14 @@
+{
+  "name": "wc-extension",
+  "version": "0.0.1",
+  "description": "Chrome extension to show info about Web Components used on page",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kschaaf@google.com",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "lit-html": "^1.0.0"
+  }
+}

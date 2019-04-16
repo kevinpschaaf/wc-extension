@@ -1,0 +1,18 @@
+# dependencies
+bower_components
+node_modules
+
+# compiled output
+dist
+
+# IDEs
+.idea
+.vscode
+
+# misc
+.DS_Store
+npm-debug.log
+
+# Typings are generated upon publish to NPM, except for one.
+*.d.ts
+!interfaces.d.ts
