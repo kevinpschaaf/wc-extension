@@ -2,7 +2,9 @@
 Chrome extension to show info about Web Components used on page.
 
 ### Reported information
-The following informaton is reported on each page:
+The extension icon shows green and number of Custom Elements defined on page, or gray if there are none.
+
+Clicking on the icon will open a popup reporting the following informaton on the current page:
 * Web Components framework used (currently only detects markers for Polymer, LitElement, AMP)
 * Polyfills loaded (which version, when available)
 * Shadow DOM Used	(yes or no)
