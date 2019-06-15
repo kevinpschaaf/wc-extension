@@ -10,12 +10,6 @@ if (!window.hasRun) {
 
   const installStats = () => {
     let polyfills;
-    if ((window.CustomElementRegistry && !window.CustomElementRegistry.toString().includes('[native code]')) ||
-        (window.customElements && !window.customElements.get.toString().includes('[native code]'))) {
-      polyfills = 'Other (CE V1)';
-    } else if (document.registerElement && !document.registerElement.toString().includes('[native code]')) {
-      polyfills = 'Other (CE V0)';
-    }
     const alreadyLoaded = document.readyState === 'complete';
     const defineMap = window.customElementsMap = new Map();
     const querySelectorDeep = (query, root=document) => {
@@ -37,7 +31,7 @@ if (!window.hasRun) {
           let def = defineMap.get(el.localName);
           if (!def) {
             const ctor = customElements.get(el.localName) || '';
-            defineMap.set(el.localName, def = {tag: el.localName, ctor, version: ctor ? 'v1' : undefined, count: 0});
+            defineMap.set(el.localName, def = {tag: el.localName, ctor, version: ctor ? 'V1' : undefined, count: 0});
           }
           def.count++;
           def.shadowRoot = def.shadowRoot || Boolean(el.shadowRoot);
@@ -54,6 +48,13 @@ if (!window.hasRun) {
             polyfills = window.WebComponents.flags ? 'WCJS V0' : 'WCJS V1';
           } else if (window.customElements && customElements.get('document-register-element-a')) {
             polyfills = 'DRE V1';
+          }
+          else if ((window.CustomElementRegistry && !window.CustomElementRegistry.toString().includes('[native code]')) ||
+              (window.customElements && window.customElements.define !== statsDefine && !window.customElements.define.toString().includes('[native code]'))) {
+            polyfills = 'Other (CE V1)';
+            console.info(customElements.get.toString(), window.CustomElementRegistry.toString());
+          } else if (document.registerElement !== statsRegister && !document.registerElement.toString().includes('[native code]')) {
+            polyfills = 'Other (CE V0)';
           }
           const detail = {
             alreadyLoaded,
@@ -72,19 +73,45 @@ if (!window.hasRun) {
       }
     }
     const origDefine = customElements.define;
-    customElements.define = function(tag, ctor, options) {
-      defineMap.set(tag, {tag, ctor, options, version: 'v1'});
-      const ret = origDefine.apply(this, arguments);
-      sendStats();
-      return ret;
-    };
+    let statsDefine;
+    if (origDefine) {
+      statsDefine = customElements.define = function(tag, ctor, options) {
+        defineMap.set(tag, {tag, ctor, options, version: 'V1'});
+        sendStats();
+        return origDefine.apply(this, arguments);
+      };
+    }
     const origRegister = document.registerElement;
-    document.registerElement = function(tag, ctor, options) {
-      defineMap.set(tag, {tag, ctor, options, version: 'v0'});
-      const ret = origRegister.apply(this, arguments);
-      sendStats();
-      return ret;
-    };
+    let statsRegister;
+    if (origRegister) {
+      statsRegister = document.registerElement = function(tag, ctor, options) {
+        defineMap.set(tag, {tag, ctor, options, version: 'V0'});
+        sendStats();
+        return origRegister.apply(this, arguments);
+      };
+    }
+    const origAttachShadow = Element.prototype.attachShadow;
+    if (origAttachShadow) {
+      Element.prototype.attachShadow = function() {
+        const def = defineMap.get(this.localName);
+        if (def) {
+          def.shadowRoot = 'V1';
+        }
+        sendStats();
+        return origAttachShadow.apply(this, arguments);
+      }
+    }
+    const origCreateShadowRoot = Element.prototype.createShadowRoot;
+    if (origCreateShadowRoot) {
+      Element.prototype.createShadowRoot = function() {
+        const def = defineMap.get(this.localName);
+        if (def) {
+          def.shadowRoot = 'V0';
+        }
+        sendStats();
+        return origCreateShadowRoot.apply(this, arguments);
+      }
+    }
     window.addEventListener('load', e => {
       sendStats();
     });

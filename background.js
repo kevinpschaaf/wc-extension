@@ -30,8 +30,8 @@ function setIcon(value) {
   context.fillStyle = color;
   roundRect(context, 0,0,19,19,6,true);
   context.fillStyle = "white";
-  context.font = "12px arial";
-  context.fillText(value, 3, 14);
+  context.font = "10px arial";
+  context.fillText(value, 3, 12);
   var imageData = context.getImageData(0, 0, 19, 19);
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.pageAction.show(tabs[0].id);
@@ -47,11 +47,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch(request.type) {
     case 'stats':
       stats = request.info;
-      const {customElements, alreadyLoaded} = request.info;
+      const {customElements, alreadyLoaded, htmlImports} = request.info;
       const total = alreadyLoaded ? 
         customElements.filter(def => def.count).length :
         customElements.filter(def => def.version).length;
-      setIcon(total);
+      if (total) {
+        setIcon(total);
+      } else if (customElements.some(r=>r.shadowRoot)) {
+        setIcon('SD');
+      } else if (htmlImports.length) {
+        setIcon('HI');
+      } else {
+        setIcon(0);
+      }
       break;
   }
 });
